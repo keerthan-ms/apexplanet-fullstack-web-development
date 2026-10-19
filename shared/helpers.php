@@ -150,10 +150,67 @@ function is_admin(): bool
     return current_user_role() === 'admin';
 }
 
-/** Redirect and stop. */
+/**
+ * URL prefix for the current task's document root.
+ *
+ * A page in a subdirectory (for example admin/index.php) must redirect to
+ * /login.php, not to /admin/login.php. A bare relative path breaks, so each
+ * task registers its own document root and redirects are built from that.
+ */
+function apex_register_base(string $docroot): void
+{
+    $GLOBALS['APEX_BASE_URL'] = '';
+    $GLOBALS['APEX_DOCROOT']   = $docroot;
+
+    $script = (string) ($_SERVER['SCRIPT_FILENAME'] ?? '');
+    if ($script === '') {
+        return;
+    }
+
+    $normalise = static fn (string $p): string => str_replace('\\', '/', $p);
+
+    $root   = $normalise(realpath($docroot) ?: $docroot);
+    $target = $normalise($script);
+
+    if ($root !== '' && str_starts_with($target, $root)) {
+        $relative = substr($target, strlen($root));          // '/admin/index.php'
+        $dir      = str_replace('\\', '/', dirname($relative)); // '/admin' or '/'
+        $GLOBALS['APEX_BASE_URL'] = rtrim($dir, '/');         // '' or '/admin'
+    }
+}
+
+function apex_base(): string
+{
+    return (string) ($GLOBALS['APEX_BASE_URL'] ?? '');
+}
+
+/**
+ * URL for a file in the current task's document root.
+ *
+ * Always docroot-relative, never relative to the current script's directory:
+ * from /admin/index.php, "login.php" must resolve to /login.php, not
+ * /admin/login.php, which would 404.
+ */
+function task_url(string $path = ''): string
+{
+    if ($path === '') {
+        return '/';
+    }
+    if (str_starts_with($path, '/')) {
+        return $path;
+    }
+    return '/' . ltrim($path, '/');
+}
+
+/** Redirect and stop. Paths are resolved against the task root, not the cwd. */
 function redirect(string $to): void
 {
-    header('Location: ' . $to);
+    // An absolute URL or a protocol-relative one is already final.
+    $isExternal = str_starts_with($to, 'http://')
+        || str_starts_with($to, 'https://')
+        || str_starts_with($to, '//');
+
+    header('Location: ' . ($isExternal ? $to : task_url($to)));
     exit;
 }
 
@@ -204,6 +261,7 @@ function render_header(string $title, bool $withNav = true, ?array $nav = null):
     // A page may declare additional stylesheets before rendering the header.
     $extraCss = $GLOBALS['APEX_EXTRA_CSS'] ?? [];
     $safeTitle = e($title);
+    $css = task_url('assets/css/style.css');
     echo <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -211,31 +269,37 @@ function render_header(string $title, bool $withNav = true, ?array $nav = null):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$safeTitle} · ApexPlanet</title>
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="{$css}">
 HTML;
     foreach ($extraCss as $href) {
-        echo '<link rel="stylesheet" href="' . e((string) $href) . '">' . "\n";
+        // task_url keeps the href correct from subdirectories such as /admin/.
+        $href = (string) (str_starts_with((string) $href, 'http') ? $href : task_url((string) $href));
+        echo '<link rel="stylesheet" href="' . e($href) . '">' . "\n";
     }
     echo "</head>\n<body>\n";
     echo '<a class="skip-link" href="#main">Skip to main content</a>' . "\n";
 
     if ($withNav) {
-        $here = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
+        $here = $_SERVER['SCRIPT_NAME'] ?? 'index.php';
+        // Compare against the full path so a nav item pointing at admin/index.php
+        // highlights correctly on that page.
+        $here = str_replace('\\', '/', $here);
+        $here = preg_replace('#^.*/' . preg_quote(basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')), '#'), '', $here) ?: basename($here);
         echo '<header class="site-header"><nav class="nav wrap" aria-label="Primary">';
-        echo '<a class="brand" href="index.php">ApexPlanet</a>';
+        echo '<a class="brand" href="' . e(task_url('index.php')) . '">ApexPlanet</a>';
         echo '<button class="nav-toggle" aria-expanded="false" aria-controls="navlist">Menu</button>';
         echo '<ul id="navlist" class="nav-list">';
         foreach ($nav as $href => $label) {
-            $active = $here === basename($href) ? ' class="active" aria-current="page"' : '';
-            echo '<li><a href="' . e($href) . '"' . $active . '>' . e($label) . '</a></li>';
+            $active = $here === ltrim($href, '/') ? ' class="active" aria-current="page"' : '';
+            echo '<li><a href="' . e(task_url($href)) . '"' . $active . '>' . e($label) . '</a></li>';
         }
         if (is_logged_in()) {
             echo '<li class="who">' . e($_SESSION['username'] ?? 'User');
             echo ' <span class="role role-' . e(current_user_role()) . '">' . e(current_user_role()) . '</span></li>';
-            echo '<li><a href="logout.php">Log out</a></li>';
+            echo '<li><a href="' . e(task_url('logout.php')) . '">Log out</a></li>';
         } else {
-            echo '<li><a href="login.php">Log in</a></li>';
-            echo '<li><a class="btn btn-sm" href="register.php">Register</a></li>';
+            echo '<li><a href="' . e(task_url('login.php')) . '">Log in</a></li>';
+            echo '<li><a class="btn btn-sm" href="' . e(task_url('register.php')) . '">Register</a></li>';
         }
         echo '</ul></nav></header>';
     }
@@ -248,7 +312,7 @@ function render_footer(): void
     echo '<footer class="site-footer"><div class="wrap">';
     echo '<p>ApexPlanet Software Pvt. Ltd. — Full Stack Web Development Internship.</p>';
     echo '</div></footer>';
-    echo '<script src="assets/js/app.js" defer></script>';
+    echo '<script src="' . e(task_url('assets/js/app.js')) . '" defer></script>';
     echo '</body></html>';
 }
 

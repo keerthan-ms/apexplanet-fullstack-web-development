@@ -9,5 +9,6 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/shared/bootstrap.php';
+apex_register_base(__DIR__);
 
 $GLOBALS['APEX_EXTRA_CSS'] = ['assets/css/task3.css'];

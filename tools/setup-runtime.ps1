@@ -207,9 +207,11 @@ if ($cfgText -match "'host'\s*=>\s*getenv\('DB_HOST'\)\s*\?:\s*'([^']*)'")   { $
 
 $CyberDb = 'apexplanet_cyber'
 
-# Task 3 keeps a separate database. Default the name if the config predates it.
+# Task 3 and Task 4 keep separate databases. Default if the config predates them.
 if ($cfgText -match "DB_USERS_NAME'\)\s*\?:\s*'([^']*)'") { $UsersDb = $Matches[1] }
 else { $UsersDb = 'apexplanet_users' }
+if ($cfgText -match "DB_SHOP_NAME'\)\s*\?:\s*'([^']*)'") { $ShopDb = $Matches[1] }
+else { $ShopDb = 'apexplanet_shop' }
 
 # The root account is local-only and its password is never written to disk.
 $RootPass = New-RandomPassword
@@ -241,11 +243,13 @@ GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
 CREATE DATABASE IF NOT EXISTS $AppDb   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS $CyberDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS $UsersDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS $ShopDb  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
 ALTER USER '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
 GRANT ALL PRIVILEGES ON $AppDb.*   TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $CyberDb.* TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $UsersDb.* TO '$AppUser'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON $ShopDb.*  TO '$AppUser'@'127.0.0.1';
 FLUSH PRIVILEGES;
 "@
     $sqlFile = Join-Path $mdDir 'provision.sql'
