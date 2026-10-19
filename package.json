@@ -1,0 +1,28 @@
+{
+  "name": "apexplanet-fullstack-web-development",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ApexPlanet Software Pvt. Ltd. - Full Stack Web Development internship (PHP & MySQL). Five independently runnable tasks.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "setup": "powershell -ExecutionPolicy Bypass -File tools/setup-runtime.ps1",
+    "db:start": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 db:start",
+    "db:stop": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 db:stop",
+    "db:status": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 db:status",
+    "task:1": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 task:1",
+    "task:2": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 task:2",
+    "task:3": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 task:3",
+    "task:4": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 task:4",
+    "task:5": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 task:5",
+    "test": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:1",
+    "test:1": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:1",
+    "test:2": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:2",
+    "test:3": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:3",
+    "test:4": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:4",
+    "test:5": "powershell -ExecutionPolicy Bypass -File tools/task.ps1 test:5",
+    "lint": "powershell -NoProfile -Command \"$f = Get-ChildItem -Recurse -Filter *.php | Where-Object { $_.FullName -notmatch 'node_modules' }; $bad = 0; $f | ForEach-Object { $o = php -l $_.FullName 2>&1; if ($o -notmatch 'No syntax errors') { Write-Host $_.FullName; $bad++ } }; if ($bad -eq 0) { Write-Host 'All PHP files parse cleanly' } else { exit 1 }\""
+  }
+}
