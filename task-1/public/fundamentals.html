@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fundamentals · Keerthan M S</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Internal (embedded) stylesheet — Task 1 requirement: inline, internal and external CSS. */
+  .spec-list { display: grid; gap: .6rem; padding-left: 1.1rem; }
+  .spec-list li::marker { color: var(--accent); }
+  .inline-note {
+    border-left: 4px solid var(--brand-2);
+    padding: .7rem 1rem;
+    background: var(--surface-2);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 1.2rem 0;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+  .pill-row li {
+    padding: .35rem .85rem; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(91,140,255,.22), rgba(139,92,246,.22));
+    border: 1px solid var(--surface-2); font-size: .88rem; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <nav class="nav wrap" aria-label="Primary">
+    <a class="brand" href="index.html">Apex<span>Planet</span></a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="navlist">Menu</button>
+    <ul id="navlist" class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="fundamentals.html" class="active" aria-current="page">Fundamentals</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a class="btn btn-sm" href="php/index.php">PHP demo</a></li>
+      <li><a class="btn btn-sm btn-ghost" href="mysql/index.php">MySQL demo</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" class="wrap">
+
+  <section class="section">
+    <div class="section-head">
+      <h2>HTML5 fundamentals</h2>
+      <p>The markup techniques covered in Task 1, in one place.</p>
+    </div>
+
+    <div class="card">
+      <h3>Semantic page structure</h3>
+      <p>
+        This site is built from <code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>,
+        <code>&lt;main&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;article&gt;</code>,
+        <code>&lt;aside&gt;</code> and <code>&lt;footer&gt;</code>. Assistive technology uses
+        these landmarks to let users jump between regions of the page.
+      </p>
+      <p class="inline-note" style="border-left-color: var(--accent)">
+        This block uses an <strong>inline</strong> <code>style</code> attribute to override
+        the left border colour, while the rest of this page is styled by the
+        <strong>internal</strong> <code>&lt;style&gt;</code> block above and the
+        <strong>external</strong> stylesheet <code>assets/css/style.css</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Table formatting</h2></div>
+    <div class="table-wrap">
+      <table>
+        <caption>Task completion tracker — updated as work is delivered.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Task</th>
+            <th scope="col">Focus</th>
+            <th scope="col">Stack</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Task 1</th><td>Foundation &amp; environment</td><td>HTML, CSS, JS, PHP, MySQL</td><td><span class="badge badge-green">Complete</span></td></tr>
+          <tr><th scope="row">Task 2</th><td>Responsive auth UI</td><td>Bootstrap 5, AJAX</td><td><span class="badge badge-blue">In repository</span></td></tr>
+          <tr><th scope="row">Task 3</th><td>User management</td><td>PHP, MySQL, PDO</td><td><span class="badge badge-blue">In repository</span></td></tr>
+          <tr><th scope="row">Task 4</th><td>Storefront &amp; admin</td><td>CRUD, Chart.js</td><td><span class="badge badge-amber">Planned</span></td></tr>
+          <tr><th scope="row">Task 5</th><td>Capstone &amp; deploy</td><td>OTP, deployment</td><td><span class="badge badge-amber">Planned</span></td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total tasks in programme</td>
+            <td>5</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Multimedia</h2></div>
+    <div class="media-grid">
+
+      <div class="media-card">
+        <h3>Audio</h3>
+        <p class="hint">A generated WAV tone played with the native <code>&lt;audio&gt;</code> element.</p>
+        <audio controls preload="none" src="assets/media/tone.wav">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <div class="media-card">
+        <h3>Video</h3>
+        <p class="hint">A generated MP4 played with the native <code>&lt;video&gt;</code> element.</p>
+        <video controls preload="none" width="320" poster="assets/img/video-poster.svg" src="assets/media/demo.mp4">
+          Your browser does not support the video element.
+        </video>
+      </div>
+
+      <div class="media-card">
+        <h3>Iframe</h3>
+        <p class="hint">
+          An embedded document. The <code>sandbox</code> attribute restricts what the
+          framed page may do, which is the safe default.
+        </p>
+        <iframe src="about.html" title="Embedded copy of the about page" loading="lazy" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Covered concepts</h2></div>
+    <ul class="pill-row">
+      <li>Semantic landmarks</li><li>Forms: input, select, textarea, radio, checkbox</li>
+      <li>Tables: thead, tbody, tfoot</li><li>Multimedia: audio, video, iframe</li>
+      <li>Inline, internal, external CSS</li><li>Flexbox &amp; Grid</li>
+      <li>Gradients, shadows, borders</li><li>Animations &amp; transitions</li>
+      <li>Media queries</li><li>DOM manipulation</li><li>Event handling</li>
+      <li>Form validation</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="site-footer"><div class="wrap"><p>© <span data-year>2026</span> Keerthan M S · ApexPlanet Full Stack Web Development internship.</p></div></footer>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
