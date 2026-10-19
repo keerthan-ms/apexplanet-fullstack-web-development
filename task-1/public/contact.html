@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact · Keerthan M S</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <nav class="nav wrap" aria-label="Primary">
+    <a class="brand" href="index.html">Apex<span>Planet</span></a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="navlist">Menu</button>
+    <ul id="navlist" class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="fundamentals.html">Fundamentals</a></li>
+      <li><a href="contact.html" class="active" aria-current="page">Contact</a></li>
+      <li><a class="btn btn-sm" href="php/index.php">PHP demo</a></li>
+      <li><a class="btn btn-sm btn-ghost" href="mysql/index.php">MySQL demo</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" class="wrap">
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Get in touch</h2>
+      <p>Demonstrates every HTML5 form control and JavaScript validation.</p>
+    </div>
+
+    <div id="form-status" class="alert alert-info" role="status" hidden></div>
+
+    <form id="contact-form" class="card" novalidate>
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="name">Full name <span aria-hidden="true">*</span></label>
+          <input type="text" id="name" name="name" required minlength="2" maxlength="60" autocomplete="name" placeholder="Keerthan M S">
+          <p class="error-text" data-error-for="name"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">Email address <span aria-hidden="true">*</span></label>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
+          <p class="hint">Must be a valid email address.</p>
+          <p class="error-text" data-error-for="email"></p>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input type="tel" id="phone" name="phone" pattern="[0-9+\-\s]{7,18}" placeholder="+91 98765 43210">
+          <p class="error-text" data-error-for="phone"></p>
+        </div>
+
+        <div class="field">
+          <label for="topic">What is this about? <span aria-hidden="true">*</span></label>
+          <select id="topic" name="topic" required>
+            <option value="">Choose a topic…</option>
+            <option value="internship">Internship opportunity</option>
+            <option value="project">Project collaboration</option>
+            <option value="mentorship">Mentorship</option>
+            <option value="other">Something else</option>
+          </select>
+          <p class="error-text" data-error-for="topic"></p>
+        </div>
+
+        <div class="field">
+          <label for="password">Sample password field <span aria-hidden="true">*</span></label>
+          <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          <label class="check"><input type="checkbox" id="toggle-pw"> Show password</label>
+          <p class="hint">Validation demo: minimum 8 characters.</p>
+          <p class="error-text" data-error-for="password"></p>
+        </div>
+
+        <div class="field">
+          <label for="website">Website</label>
+          <input type="url" id="website" name="website" placeholder="https://example.com">
+          <p class="error-text" data-error-for="website"></p>
+        </div>
+
+        <div class="field full">
+          <label for="message">Message <span aria-hidden="true">*</span></label>
+          <textarea id="message" name="message" required minlength="20" maxlength="1000" placeholder="Tell me a little about what you have in mind…"></textarea>
+          <p class="hint"><span id="char-count">0</span> / 1000 characters (minimum 20).</p>
+          <p class="error-text" data-error-for="message"></p>
+        </div>
+
+        <div class="field full">
+          <fieldset>
+            <legend>How urgent is it?</legend>
+            <label class="check"><input type="radio" name="urgency" value="low" checked> Low — no rush</label><br>
+            <label class="check"><input type="radio" name="urgency" value="normal"> Normal</label><br>
+            <label class="check"><input type="radio" name="urgency" value="high"> High</label>
+          </fieldset>
+        </div>
+
+        <div class="field full">
+          <fieldset>
+            <legend>Topics you care about</legend>
+            <label class="check"><input type="checkbox" name="interests[]" value="php"> PHP</label><br>
+            <label class="check"><input type="checkbox" name="interests[]" value="security"> Cybersecurity</label><br>
+            <label class="check"><input type="checkbox" name="interests[]" value="frontend"> Frontend</label><br>
+            <label class="check"><input type="checkbox" name="interests[]" value="databases"> Databases</label>
+          </fieldset>
+        </div>
+
+        <div class="field full">
+          <label class="check">
+            <input type="checkbox" id="consent" name="consent" value="1" required>
+            I agree to be contacted about this enquiry. <span aria-hidden="true">*</span>
+          </label>
+          <p class="error-text" data-error-for="consent"></p>
+        </div>
+
+        <div class="field full">
+          <button class="btn" type="submit">Send message</button>
+          <button class="btn btn-ghost" type="reset">Reset</button>
+        </div>
+
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap"><p>© 2026 Keerthan M S · ApexPlanet Full Stack Web Development internship.</p></div>
+</footer>
+
+<script src="assets/js/main.js" defer></script>
+<script src="assets/js/validation.js" defer></script>
+</body>
+</html>
