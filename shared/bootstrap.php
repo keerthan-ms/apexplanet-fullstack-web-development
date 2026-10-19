@@ -27,10 +27,45 @@ ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
 /**
+ * Resolve a usable session directory.
+ *
+ * A relative or stale session.save_path in php.ini makes session_start() emit
+ * a warning, which corrupts any JSON response a page goes on to emit. Pick the
+ * first candidate that exists (creating it if needed) and otherwise defer to
+ * the system temp directory.
+ */
+function apex_session_path(string $scriptDir): string
+{
+    $candidates = [];
+    $configured = ini_get('session.save_path');
+    if (is_string($configured) && $configured !== '') {
+        $candidates[] = $configured;
+    }
+    $candidates[] = $scriptDir . '/_runtime/php/sessions';
+    $candidates[] = dirname($scriptDir) . '/_runtime/php/sessions';
+    $candidates[] = dirname($scriptDir, 2) . '/_runtime/php/sessions';
+
+    foreach ($candidates as $candidate) {
+        if ($candidate === '' || str_contains($candidate, "\0")) {
+            continue;
+        }
+        if (is_dir($candidate)) {
+            return $candidate;
+        }
+        if (@mkdir($candidate, 0o777, true) && is_dir($candidate)) {
+            return $candidate;
+        }
+    }
+    return sys_get_temp_dir();
+}
+
+/**
  * Hardened session. HttpOnly + SameSite guard against the most common session
  * attacks; the CSRF token in helpers.php covers cross-site request forgery.
  */
 if (session_status() === PHP_SESSION_NONE) {
+    $sessionDir = apex_session_path(dirname(__DIR__));
+    session_save_path($sessionDir);
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
