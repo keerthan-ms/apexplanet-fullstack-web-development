@@ -1,0 +1,48 @@
+# --- Local secrets and configuration -------------------------------------
+shared/config.php
+.env
+.env.local
+
+# --- Portable runtime (PHP + MariaDB installed by tools/setup-runtime.ps1) --
+_runtime/
+_dl/
+*.pid
+*.log
+
+# --- Task 3 uploaded files -------------------------------------------------
+task-3/storage/
+task-3/public/uploads/*
+!task-3/public/uploads/.gitkeep
+
+# --- Task 5 generated artefacts -------------------------------------------
+task-5/storage/
+
+# --- Dependencies and caches ----------------------------------------------
+node_modules/
+vendor/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# --- Build output ----------------------------------------------------------
+dist/
+build/
+.cache/
+
+# --- Editor and OS noise ---------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Evidence that must not be committed -----------------------------------
+# Screenshots and scan output can contain internal hostnames and IPs.
+# Commit curated reports under reports/, never raw captures.
+*.pcap
+*.pcapng
+scans/raw/
