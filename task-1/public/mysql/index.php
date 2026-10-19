@@ -22,12 +22,30 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 /* ------------------------------------------------- 1. Connect ---------- */
 
 // mysqli_connect() is the procedural form required by the task brief.
-// The credentials come from shared/config.php via environment defaults so
-// nothing secret is hard-coded here.
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$user = getenv('DB_USER') ?: 'apexplanet';
-$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'ApexApp_2026!dev';
-$name = getenv('DB_NAME') ?: 'apexplanet_fullstack';
+// Credentials come from the gitignored shared/config.php (or the DB_*
+// environment variables), never from this file.
+$root  = dirname(__DIR__, 3);
+$dbCfg = [
+    'host' => getenv('DB_HOST') ?: '127.0.0.1',
+    'user' => getenv('DB_USER') ?: 'apexplanet',
+    'pass' => getenv('DB_PASS') ?: '',
+    'name' => getenv('DB_NAME') ?: 'apexplanet_fullstack',
+];
+
+if (is_file($root . '/shared/config.php')) {
+    $cfg = require $root . '/shared/config.php';
+    $dbCfg = array_merge($dbCfg, [
+        'host' => $cfg['db']['host'],
+        'user' => $cfg['db']['user'],
+        'pass' => $cfg['db']['pass'],
+        'name' => $cfg['db']['name'],
+    ]);
+}
+
+$host = $dbCfg['host'];
+$user = $dbCfg['user'];
+$pass = $dbCfg['pass'];
+$name = $dbCfg['name'];
 
 $dbAvailable = true;
 $dbError     = '';

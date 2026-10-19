@@ -119,10 +119,19 @@ switch -Regex ($Command) {
     '^db:status$' {
         if (Get-Process mysqld -ErrorAction SilentlyContinue) {
             Write-Host 'MariaDB is running.' -ForegroundColor Green
-            & (Join-Path $bin 'mariadb.exe') --defaults-file=$myini -u apexplanet '-pApexApp_2026!dev' `
-                -h 127.0.0.1 -e 'SHOW DATABASES;' 2>&1 | ForEach-Object { "  $_" }
+            # Read credentials from the gitignored config, never hard-code them.
+            $cfgFile = Join-Path $Root 'shared\config.php'
+            $dbUser = 'apexplanet'; $dbPass = ''; $dbHost = '127.0.0.1'
+            if (Test-Path $cfgFile) {
+                $t = Get-Content $cfgFile -Raw
+                if ($t -match "'user'\s*=>\s*getenv\('DB_USER'\)\s*\?:\s*'([^']*)'")     { $dbUser = $Matches[1] }
+                if ($t -match "'pass'\s*=>\s*getenv\('DB_PASS'\)\s*\?:\s*'([^']*)'")     { $dbPass = $Matches[1] }
+                if ($t -match "'host'\s*=>\s*getenv\('DB_HOST'\)\s*\?:\s*'([^']*)'")     { $dbHost = $Matches[1] }
+            }
+            & (Join-Path $bin 'mariadb.exe') --defaults-file=$myini -u $dbUser "-p$dbPass" `
+                -h $dbHost -e 'SHOW DATABASES;' 2>&1 | ForEach-Object { "  $_" }
         } else {
-            Write-Host 'MariaDB is not running. Start it with: .\tools\task.ps1 db:start' -ForegroundColor Yellow
+            Write-Host 'MariaDB is not running. Start it with: npm run db:start' -ForegroundColor Yellow
         }
     }
     '^setup$' {

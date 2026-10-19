@@ -17,11 +17,21 @@
 
 [CmdletBinding()]
 param(
-    [string]$Root = (Split-Path -Parent $PSScriptRoot),
+    [string]$Root = '',
     [switch]$SkipDatabase
 )
 
 $ErrorActionPreference = 'Stop'
+
+# $PSScriptRoot is not always populated inside a param default, so resolve the
+# script directory here instead.
+$ScriptDir = $PSScriptRoot
+if (-not $ScriptDir) {
+    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if (-not $Root) {
+    $Root = Split-Path -Parent $ScriptDir
+}
 
 $runtime = Join-Path (Split-Path -Parent $Root) '_runtime'
 $phpDir  = Join-Path $runtime 'php'
@@ -33,14 +43,6 @@ $PHP_URL     = "https://windows.php.net/downloads/releases/php-$PHP_VERSION-nts-
 $MARIADB_URL = 'https://archive.mariadb.org/mariadb-11.4.7/winx64-packages/mariadb-11.4.7-winx64.zip'
 
 $MARIADB_HOME = Join-Path $mdDir 'mariadb-11.4.7-winx64'
-
-# Credentials used by the project. Development only.
-$RootUser = 'root'
-$RootPass = 'apex_dev_root_2026'
-$AppUser  = 'apexplanet'
-$AppPass  = 'ApexApp_2026!dev'
-$AppDb    = 'apexplanet_fullstack'
-$CyberDb  = 'apexplanet_cyber'
 
 function Write-Step($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)   { Write-Host "    $msg" -ForegroundColor Green }
@@ -152,6 +154,62 @@ if (-not (Test-Path (Join-Path $dataDir 'mysql'))) {
     Write-Ok 'Data directory initialised'
 }
 
+# ------------------------------------------------- shared/config + creds ---
+# Credentials are generated on first run and written to the gitignored
+# shared/config.php. Nothing secret is ever stored in this repository.
+$cfgPath = Join-Path $Root 'shared\config.php'
+
+if (-not (Test-Path $cfgPath)) {
+    Write-Step 'Creating shared/config.php from the example'
+    $example = Join-Path $Root 'shared\config.example.php'
+    if (-not (Test-Path $example)) { throw "Missing $example" }
+    Copy-Item $example $cfgPath
+    Write-Ok 'shared/config.php created (gitignored)'
+}
+
+$cfgText = Get-Content $cfgPath -Raw
+
+function Write-Utf8NoBom {
+    # PowerShell 5.1's `Set-Content -Encoding UTF8` writes a BOM, which makes
+    # `declare(strict_types=1)` no longer the first statement and fatals PHP.
+    param([string]$Path, [string]$Text)
+    [System.IO.File]::WriteAllText($Path, $Text, (New-Object System.Text.UTF8Encoding($false)))
+}
+
+function New-RandomPassword {
+    # PowerShell 5.1 runs on .NET Framework, which has no
+    # [RandomNumberGenerator]::Fill(), so use the older provider.
+    $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
+    $buf = New-Object byte[] 24
+    $rng.GetBytes($buf)
+    $rng.Dispose()
+    return ([Convert]::ToBase64String($buf).TrimEnd('=').Replace('+', 'A').Replace('/', 'b'))
+}
+
+# Check the empty default first: the "non-empty" pattern would also match an
+# empty quoted string, so testing it first would skip generation entirely.
+if ($cfgText -match "'pass'\s*=>\s*getenv\('DB_PASS'\)\s*\?:\s*''") {
+    # First run: generate a strong random password.
+    $AppPass = New-RandomPassword
+    $cfgText = $cfgText -replace "('pass'\s*=>\s*getenv\('DB_PASS'\)\s*\?:\s*)''", "`$1'$AppPass'"
+    Write-Utf8NoBom -Path $cfgPath -Text $cfgText
+    Write-Ok 'Random password generated and stored in shared/config.php'
+} elseif ($cfgText -match "'pass'\s*=>\s*getenv\('DB_PASS'\)\s*\?:\s*'([^']+)'") {
+    $AppPass = $Matches[1]
+    Write-Ok 'Loaded existing database password from shared/config.php'
+} else {
+    throw "Could not determine the DB password from $cfgPath"
+}
+
+if ($cfgText -match "'name'\s*=>\s*getenv\('DB_NAME'\)\s*\?:\s*'([^']*)'")   { $AppDb   = $Matches[1] }
+if ($cfgText -match "'user'\s*=>\s*getenv\('DB_USER'\)\s*\?:\s*'([^']*)'")   { $AppUser = $Matches[1] }
+if ($cfgText -match "'host'\s*=>\s*getenv\('DB_HOST'\)\s*\?:\s*'([^']*)'")   { $DbHost  = $Matches[1] }
+
+$CyberDb = 'apexplanet_cyber'
+
+# The root account is local-only and its password is never written to disk.
+$RootPass = New-RandomPassword
+
 # ------------------------------------------------------- database setup ---
 function Stop-Db {
     Get-Process mysqld -ErrorAction SilentlyContinue | ForEach-Object { try { $_.Kill() } catch {} }
@@ -170,14 +228,16 @@ if ($SkipDatabase) {
     Write-Step 'Starting MariaDB with --skip-grant-tables to provision accounts'
     Start-Db @('--skip-grant-tables')
 
+    $safeApp = $AppPass.Replace("'", "''")
+    $safeRoot = $RootPass.Replace("'", "''")
     $sql = @"
 FLUSH PRIVILEGES;
-ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '$RootPass';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '$safeRoot';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
 CREATE DATABASE IF NOT EXISTS $AppDb   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS $CyberDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '$AppUser'@'127.0.0.1' IDENTIFIED BY '$AppPass';
-ALTER USER '$AppUser'@'127.0.0.1' IDENTIFIED BY '$AppPass';
+CREATE USER IF NOT EXISTS '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
+ALTER USER '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
 GRANT ALL PRIVILEGES ON $AppDb.*   TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $CyberDb.* TO '$AppUser'@'127.0.0.1';
 FLUSH PRIVILEGES;
@@ -195,17 +255,9 @@ FLUSH PRIVILEGES;
         ForEach-Object { Write-Ok $_ }
 }
 
-# ------------------------------------------------------- shared/config ----
-$cfg = Join-Path $Root 'shared\config.php'
-if (-not (Test-Path $cfg)) {
-    Write-Step 'Creating shared/config.php from the example'
-    Copy-Item (Join-Path $Root 'shared\config.example.php') $cfg
-    Write-Ok 'shared/config.php created (gitignored)'
-}
-
 Write-Host ''
 Write-Host 'Setup complete.' -ForegroundColor Green
 Write-Host ''
-Write-Host '  Start a task:   php -S 127.0.0.1:8081 -t task-1\public'
-Write-Host '  Run the tests:  php task-1\tests\run-tests.php'
+Write-Host '  Start a task:   npm run task:1'
+Write-Host '  Run the tests:  npm run test:1'
 Write-Host ''

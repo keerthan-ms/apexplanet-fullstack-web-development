@@ -163,10 +163,29 @@ check('badge_class() defaults to amber', str_contains(badge_class('unknown'), 'b
 
 section('6. MySQL connectivity');
 
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$user = getenv('DB_USER') ?: 'apexplanet';
-$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'ApexApp_2026!dev';
-$name = getenv('DB_NAME') ?: 'apexplanet_fullstack';
+// Credentials live in the gitignored shared/config.php. Fall back to the
+// DB_* environment variables so CI can inject them instead.
+$dbCfg = [
+    'host' => getenv('DB_HOST') ?: '127.0.0.1',
+    'user' => getenv('DB_USER') ?: 'apexplanet',
+    'pass' => getenv('DB_PASS') ?: '',
+    'name' => getenv('DB_NAME') ?: 'apexplanet_fullstack',
+];
+
+if (is_file(ROOT . '/shared/config.php')) {
+    $cfg = require ROOT . '/shared/config.php';
+    $dbCfg = array_merge($dbCfg, [
+        'host' => $cfg['db']['host'],
+        'user' => $cfg['db']['user'],
+        'pass' => $cfg['db']['pass'],
+        'name' => $cfg['db']['name'],
+    ]);
+}
+
+$host = $dbCfg['host'];
+$user = $dbCfg['user'];
+$pass = $dbCfg['pass'];
+$name = $dbCfg['name'];
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
