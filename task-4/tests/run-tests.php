@@ -138,6 +138,13 @@ try {
 
     check('connects to the shop database', true);
 
+    // Reset catalogue visibility. This suite deliberately deactivates a product
+    // to prove the "in use, so deactivate instead of delete" rule; without this
+    // reset a repeated run would quietly shrink the seeded catalogue until the
+    // storefront assertions started failing on unrelated grounds.
+    $pdo->exec('UPDATE products SET is_active = 1 WHERE is_active = 0');
+    check('catalogue visibility reset to the seeded state', true);
+
     $tables = $pdo->query('SELECT table_name FROM information_schema.TABLES WHERE table_schema = DATABASE()')
         ->fetchAll(PDO::FETCH_COLUMN);
     foreach (['users', 'categories', 'products', 'orders', 'order_items'] as $t) {
@@ -376,6 +383,7 @@ check('product row removed', (int) $stmt->fetchColumn() === 0);
 
 // Deleting a product referenced by an order must deactivate, not delete.
 $ordered = (int) $pdo->query('SELECT product_id FROM order_items LIMIT 1')->fetchColumn();
+$orderedWasActive = (int) $pdo->query("SELECT is_active FROM products WHERE id = {$ordered}")->fetchColumn();
 $r = $admin->get('/admin/products.php');
 $r = $admin->post('/admin/products.php', ['csrf_token' => $r->token(), 'action' => 'delete', 'id' => $ordered]);
 $stmt = $pdo->prepare('SELECT COUNT(*) FROM products WHERE id = ?');
@@ -429,6 +437,8 @@ $pdo->exec("UPDATE users SET role = 'user' WHERE id = {$demoId}");
 $pdo->prepare('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)')->execute([$demoId]);
 $pdo->prepare('DELETE FROM orders WHERE user_id = ?')->execute([$demoId]);
 $pdo->prepare('UPDATE products SET stock = stock + 2 WHERE id = ?')->execute([$pid]);
+// Undo the deactivation this suite performed, so the next run starts clean.
+$pdo->exec("UPDATE products SET is_active = {$orderedWasActive} WHERE id = {$ordered}");
 
 /* ---------------------------------------------------------- summary --- */
 
