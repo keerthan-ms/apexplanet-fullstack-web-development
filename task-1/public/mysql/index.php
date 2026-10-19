@@ -62,7 +62,9 @@ try {
 echo '<section class="section"><div class="section-head"><h2>1. Connecting with mysqli_connect()</h2></div><div class="card">';
 if ($dbAvailable) {
     $server = mysqli_get_server_info($conn);
-    $db     = mysqli_get_db($conn);
+    // mysqli has no mysqli_get_db(); the active database is the configured
+    // name used to open the connection.
+    $db     = $name;
     echo '<div class="alert alert-success" role="status">Connected to <strong>' . e($db)
        . '</strong> on <strong>' . e($host) . '</strong> using MariaDB ' . e($server) . '.</div>';
     echo '<pre>$conn = mysqli_connect(' . e($host) . ", '" . e($user) . "', \$password, '" . e($db) . "');\n"

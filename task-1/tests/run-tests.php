@@ -189,8 +189,11 @@ $name = $dbCfg['name'];
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+$dbConnected = false;
+
 try {
     $conn = mysqli_connect($host, $user, $pass, $name);
+    $dbConnected = true;
     check('connects to MySQL', true);
     check('server is MariaDB or MySQL', (bool) preg_match('/(MariaDB|MySQL)/i', mysqli_get_server_info($conn)));
 
@@ -359,6 +362,45 @@ if (!is_resource($server)) {
             }
             $status = $ok ? '200 + content' : 'failed';
             check("GET {$route}", $ok, $status);
+        }
+
+        // Dedicated MySQL page check: the route map above only looks for a
+        // heading, which can be echoed before a fatal error. Inspect the full
+        // body instead, then require either real connection information or a
+        // deliberately rendered connection error.
+        $mysqlBody = @file_get_contents(
+            "http://127.0.0.1:{$port}/mysql/index.php",
+            false,
+            stream_context_create(['http' => ['timeout' => 10, 'ignore_errors' => true]])
+        );
+        $mysqlBodyOk = $mysqlBody !== false;
+        $fatalPattern = '/(?:Fatal error|Parse error|Uncaught (?:Error|TypeError|mysqli_sql_exception)|Call to undefined function)/i';
+        $hasFatal = $mysqlBodyOk && preg_match($fatalPattern, (string) $mysqlBody) === 1;
+        check(
+            '/mysql/index.php contains no PHP fatal error',
+            $mysqlBodyOk && !$hasFatal,
+            $mysqlBodyOk ? ($hasFatal ? 'fatal error text present' : 'clean body') : 'request failed'
+        );
+
+        if ($dbConnected) {
+            check(
+                '/mysql/index.php renders the database connection info',
+                $mysqlBodyOk && str_contains((string) $mysqlBody, 'Connected to')
+                    && str_contains((string) $mysqlBody, $name),
+                'expected the configured database name in the success alert'
+            );
+            check(
+                '/mysql/index.php renders the CRUD table with seeded posts',
+                $mysqlBodyOk && str_contains((string) $mysqlBody, 'Create, Insert, Update, Delete')
+                    && str_contains((string) $mysqlBody, 'First post'),
+                'expected the CRUD section and seeded post'
+            );
+        } else {
+            check(
+                '/mysql/index.php renders the connection error',
+                $mysqlBodyOk && str_contains((string) $mysqlBody, 'Could not connect:'),
+                'expected the rendered connection-error alert'
+            );
         }
 
         // POST to the PHP demo must run without a fatal error.
