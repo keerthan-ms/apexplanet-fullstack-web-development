@@ -14,12 +14,12 @@ Branch: `main`
 
 | Task | Title | Timeline | Suite |
 |---|---|---|---|
-| [Task 1](task-1/README.md) | Foundation & Environment Setup | Days 1–12 | **97 passing** |
+| [Task 1](task-1/README.md) | Foundation & Environment Setup | Days 1–12 | **100 passing** |
 | [Task 2](task-2/README.md) | Frontend Development with Responsive Design | Days 13–24 | **127 passing** |
 | [Task 3](task-3/README.md) | Backend Integration & CRUD | Days 25–36 | **80 passing** |
 | [Task 4](task-4/README.md) | Real-World Project Development | Days 37–48 | **68 passing** |
 | [Task 5](task-5/README.md) | Capstone Project + Deployment | Days 49–60 | **77 passing** |
-| | | | **449 passing, 0 failing** |
+| | | | **452 passing, 0 failing** |
 
 ---
 
@@ -96,7 +96,7 @@ shares only `shared/` and `vendor-assets/`.
 ### Test results
 
 ```
-task-1 :   passed : 97    failed : 0   ALL TESTS PASSED
+task-1 :   passed : 100   failed : 0   ALL TESTS PASSED
 task-2 :   passed : 127   failed : 0   ALL TESTS PASSED
 task-3 :   passed : 80    failed : 0   ALL TESTS PASSED
 task-4 :   passed : 68    failed : 0   ALL TESTS PASSED
@@ -105,6 +105,11 @@ task-5 :   passed : 77    failed : 0   ALL TESTS PASSED
 
 Task 4 was re-run three times consecutively to prove the suite restores the
 seeded data it disturbs rather than degrading on each run.
+
+Task 1 now includes three regression checks against `/mysql/index.php`: no PHP
+fatal error, the connection details are rendered, and the CRUD section shows
+the seeded post. These exist because `mysqli_get_db()` is not a real function
+and had been called there.
 
 Every PHP file in the repository parses cleanly:
 
