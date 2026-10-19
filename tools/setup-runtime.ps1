@@ -66,6 +66,8 @@ if (Test-Path (Join-Path $phpDir 'php.exe')) {
 $iniPath = Join-Path $phpDir 'php.ini'
 if (-not (Test-Path $iniPath)) {
     Write-Step 'Writing php.ini'
+    $basedir = $phpDir -replace '\\','/'
+    $logPath = "$basedir/php-error.log" -replace '\\','/'
     $ini = @"
 [PHP]
 engine = On
@@ -74,13 +76,16 @@ max_execution_time = 30
 error_reporting = E_ALL
 display_errors = On
 log_errors = On
+; Absolute paths: a relative log or session path silently fails whenever the
+; working directory differs from the document root.
+error_log = "$logPath"
 expose_php = Off
 allow_url_fopen = On
 allow_url_include = Off
 date.timezone = "Asia/Kolkata"
 default_charset = "UTF-8"
 
-session.save_path = "$($phpDir -replace '\\','/')/sessions"
+session.save_path = "$basedir/sessions"
 session.use_strict_mode = 1
 session.use_only_cookies = 1
 session.cookie_httponly = 1
@@ -212,6 +217,8 @@ if ($cfgText -match "DB_USERS_NAME'\)\s*\?:\s*'([^']*)'") { $UsersDb = $Matches[
 else { $UsersDb = 'apexplanet_users' }
 if ($cfgText -match "DB_SHOP_NAME'\)\s*\?:\s*'([^']*)'") { $ShopDb = $Matches[1] }
 else { $ShopDb = 'apexplanet_shop' }
+if ($cfgText -match "DB_LMS_NAME'\)\s*\?:\s*'([^']*)'") { $LmsDb = $Matches[1] }
+else { $LmsDb = 'apexplanet_lms' }
 
 # The root account is local-only and its password is never written to disk.
 $RootPass = New-RandomPassword
@@ -244,12 +251,14 @@ CREATE DATABASE IF NOT EXISTS $AppDb   CHARACTER SET utf8mb4 COLLATE utf8mb4_uni
 CREATE DATABASE IF NOT EXISTS $CyberDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS $UsersDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS $ShopDb  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS $LmsDb   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
 ALTER USER '$AppUser'@'127.0.0.1' IDENTIFIED BY '$safeApp';
 GRANT ALL PRIVILEGES ON $AppDb.*   TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $CyberDb.* TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $UsersDb.* TO '$AppUser'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON $ShopDb.*  TO '$AppUser'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON $LmsDb.*   TO '$AppUser'@'127.0.0.1';
 FLUSH PRIVILEGES;
 "@
     $sqlFile = Join-Path $mdDir 'provision.sql'

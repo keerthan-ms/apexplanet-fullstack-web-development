@@ -46,6 +46,16 @@ return [
         'charset' => 'utf8mb4',
     ],
 
+    // Task 5 capstone keeps its own database.
+    'db_lms' => [
+        'host'    => getenv('DB_HOST') ?: '127.0.0.1',
+        'port'    => (int) (getenv('DB_PORT') ?: 3306),
+        'name'    => getenv('DB_LMS_NAME') ?: 'apexplanet_lms',
+        'user'    => getenv('DB_USER') ?: 'apexplanet',
+        'pass'    => getenv('DB_PASS') ?: '',
+        'charset' => 'utf8mb4',
+    ],
+
     // Application settings
     'app' => [
         'name'     => 'ApexPlanet Full Stack',
