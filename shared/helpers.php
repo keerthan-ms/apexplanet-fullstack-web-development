@@ -21,11 +21,20 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '">';
 }
 
+/** True when the supplied token matches the session token. */
+function csrf_ok(?string $sent): bool
+{
+    return is_string($sent)
+        && $sent !== ''
+        && !empty($_SESSION['csrf'])
+        && hash_equals((string) $_SESSION['csrf'], $sent);
+}
+
 /** Abort the request unless the submitted token matches the session token. */
 function csrf_require(): void
 {
     $sent = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
-    if (!is_string($sent) || !hash_equals(csrf_token(), $sent)) {
+    if (!csrf_ok(is_string($sent) ? $sent : null)) {
         http_response_code(419);
         exit('CSRF token mismatch. Reload the page and try again.');
     }
@@ -40,9 +49,19 @@ function e(?string $v): string
 }
 
 /** Escape for a JavaScript string / JSON context. */
-function json_out($data): string
+/**
+ * Encode a value for safe embedding inside a <script> block.
+ *
+ * Named json_safe (not json_out) deliberately: json_out() is the responder
+ * that writes a JSON response and stops. Having one name mean both made a real
+ * endpoint silently emit nothing.
+ */
+function json_safe($data): string
 {
-    return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    return (string) json_encode(
+        $data,
+        JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    );
 }
 
 /* ------------------------------------------------------------- Input ----- */
@@ -65,12 +84,32 @@ function post_int(string $key, int $default = 0): int
     return isset($_POST[$key]) && is_scalar($_POST[$key]) ? (int) $_POST[$key] : $default;
 }
 
-/** JSON response and stop. */
-function json_response(array $payload, int $status = 200): void
+/**
+ * Write a JSON response and stop.
+ *
+ * JSON_INVALID_UTF8_SUBSTITUTE guarantees a body is always produced: without
+ * it, one bad byte anywhere in the payload makes json_encode() return false and
+ * the response is silently empty with a 200 status.
+ */
+function json_out(array $payload, int $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    header('Cache-Control: no-store');
+
+    $body = json_encode(
+        $payload,
+        JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+    );
+    if ($body === false) {
+        $body = (string) json_encode(
+            ['error' => 'Response could not be encoded.'],
+            JSON_UNESCAPED_SLASHES
+        );
+        http_response_code(500);
+    }
+
+    echo $body;
     exit;
 }
 
@@ -280,11 +319,19 @@ HTML;
     echo '<a class="skip-link" href="#main">Skip to main content</a>' . "\n";
 
     if ($withNav) {
-        $here = $_SERVER['SCRIPT_NAME'] ?? 'index.php';
-        // Compare against the full path so a nav item pointing at admin/index.php
-        // highlights correctly on that page.
-        $here = str_replace('\\', '/', $here);
-        $here = preg_replace('#^.*/' . preg_quote(basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')), '#'), '', $here) ?: basename($here);
+        // The path of the running script relative to this task's document root,
+        // so nav keys such as 'admin/index.php' match exactly. Deriving it from
+        // SCRIPT_FILENAME and the docroot keeps it correct even when the app is
+        // mounted under a subdirectory; SCRIPT_NAME is the fallback when the two
+        // cannot be compared (realpath mismatch, symlinks).
+        $docroot    = rtrim(str_replace('\\', '/', (string) ($GLOBALS['APEX_DOCROOT'] ?? '')), '/');
+        $scriptFile = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_FILENAME'] ?? ''));
+        if ($docroot !== '' && $scriptFile !== '' && str_starts_with($scriptFile, $docroot . '/')) {
+            $here = substr($scriptFile, strlen($docroot) + 1);
+        } else {
+            $here = (string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php');
+        }
+        $here = ltrim(str_replace('\\', '/', $here), '/');
         echo '<header class="site-header"><nav class="nav wrap" aria-label="Primary">';
         echo '<a class="brand" href="' . e(task_url('index.php')) . '">ApexPlanet</a>';
         echo '<button class="nav-toggle" aria-expanded="false" aria-controls="navlist">Menu</button>';

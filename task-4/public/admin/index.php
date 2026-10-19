@@ -202,11 +202,11 @@ render_header('Admin dashboard', true, shop_nav());
     new Chart(ordersCanvas, {
       type: 'line',
       data: {
-        labels: <?= json_out($labels) ?>,
+        labels: <?= json_safe($labels) ?>,
         datasets: [
           {
             label: 'Orders',
-            data: <?= json_out($orderSeries) ?>,
+            data: <?= json_safe($orderSeries) ?>,
             borderColor: palette.indigo,
             backgroundColor: 'rgba(91,140,255,.18)',
             fill: true,
@@ -215,7 +215,7 @@ render_header('Admin dashboard', true, shop_nav());
           },
           {
             label: 'Revenue (INR)',
-            data: <?= json_out(array_map(static fn ($v) => round((float) $v, 2), $revenueSeries)) ?>,
+            data: <?= json_safe(array_map(static fn ($v) => round((float) $v, 2), $revenueSeries)) ?>,
             borderColor: palette.cyan,
             backgroundColor: 'transparent',
             borderDash: [6, 4],
@@ -245,9 +245,9 @@ render_header('Admin dashboard', true, shop_nav());
     new Chart(statusCanvas, {
       type: 'doughnut',
       data: {
-        labels: <?= json_out($statusLabels) ?>,
+        labels: <?= json_safe($statusLabels) ?>,
         datasets: [{
-          data: <?= json_out($statusCounts) ?>,
+          data: <?= json_safe($statusCounts) ?>,
           backgroundColor: statusColours,
           borderColor: '#1a2340',
           borderWidth: 2

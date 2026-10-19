@@ -87,7 +87,19 @@ if (!empty($_SERVER['HTTPS']) && strtolower((string) ($_SERVER['HTTP_X_FORWARDED
 }
 
 if (!empty($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_require();
+    // An endpoint under /api/ must answer with JSON even when it refuses, or a
+    // fetch() caller gets an HTML error page it cannot parse.
+    $script = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    $isApi  = str_contains($script, '/api/');
+
+    if ($isApi && function_exists('json_out')) {
+        $sent = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+        if (!is_string($sent) || $sent === '' || !csrf_ok($sent)) {
+            json_out(['error' => 'CSRF token missing or invalid.'], 419);
+        }
+    } else {
+        csrf_require();
+    }
 }
 
 header('X-Content-Type-Options: nosniff');
