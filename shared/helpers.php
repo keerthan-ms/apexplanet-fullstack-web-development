@@ -186,8 +186,23 @@ function url(string $path = ''): string
     return '/' . ltrim($path, '/');
 }
 
-function render_header(string $title, bool $withNav = true): void
+/**
+ * Render the opening document, header and navigation.
+ *
+ * @param array<int,array{0:string,1:string}>|null $nav [href => label] pairs.
+ *                                             Defaults to the Task 4/5 set.
+ */
+function render_header(string $title, bool $withNav = true, ?array $nav = null): void
 {
+    $nav ??= [
+        'index.php'       => 'Home',
+        'products.php'    => 'Catalogue',
+        'orders.php'      => 'My Orders',
+        'admin/index.php' => 'Admin',
+        'profile.php'     => 'Profile',
+    ];
+    // A page may declare additional stylesheets before rendering the header.
+    $extraCss = $GLOBALS['APEX_EXTRA_CSS'] ?? [];
     $safeTitle = e($title);
     echo <<<HTML
 <!DOCTYPE html>
@@ -197,25 +212,20 @@ function render_header(string $title, bool $withNav = true): void
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$safeTitle} · ApexPlanet</title>
 <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-<a class="skip-link" href="#main">Skip to main content</a>
 HTML;
+    foreach ($extraCss as $href) {
+        echo '<link rel="stylesheet" href="' . e((string) $href) . '">' . "\n";
+    }
+    echo "</head>\n<body>\n";
+    echo '<a class="skip-link" href="#main">Skip to main content</a>' . "\n";
 
     if ($withNav) {
         $here = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
-        $items = [
-            'index.php'      => 'Home',
-            'products.php'   => 'Catalogue',
-            'orders.php'     => 'My Orders',
-            'admin/index.php' => 'Admin',
-            'profile.php'    => 'Profile',
-        ];
         echo '<header class="site-header"><nav class="nav wrap" aria-label="Primary">';
         echo '<a class="brand" href="index.php">ApexPlanet</a>';
         echo '<button class="nav-toggle" aria-expanded="false" aria-controls="navlist">Menu</button>';
         echo '<ul id="navlist" class="nav-list">';
-        foreach ($items as $href => $label) {
+        foreach ($nav as $href => $label) {
             $active = $here === basename($href) ? ' class="active" aria-current="page"' : '';
             echo '<li><a href="' . e($href) . '"' . $active . '>' . e($label) . '</a></li>';
         }

@@ -24,6 +24,17 @@ return [
         'charset' => 'utf8mb4',
     ],
 
+    // Task 3 keeps its own database so it stays independently runnable and
+    // never depends on the Task 1 demonstration tables sharing this one.
+    'db_users' => [
+        'host'    => getenv('DB_HOST') ?: '127.0.0.1',
+        'port'    => (int) (getenv('DB_PORT') ?: 3306),
+        'name'    => getenv('DB_USERS_NAME') ?: 'apexplanet_users',
+        'user'    => getenv('DB_USER') ?: 'apexplanet',
+        'pass'    => getenv('DB_PASS') ?: '',
+        'charset' => 'utf8mb4',
+    ],
+
     // Application settings
     'app' => [
         'name'     => 'ApexPlanet Full Stack',

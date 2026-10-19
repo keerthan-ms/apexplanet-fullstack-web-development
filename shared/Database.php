@@ -12,11 +12,21 @@ declare(strict_types=1);
 
 final class Database
 {
-    private static ?Database $instance = null;
+    /**
+     * Named connections. Task 3 uses its own database alongside the shared one,
+     * so instances are keyed by database name rather than being a single global.
+     *
+     * @var array<string,self>
+     */
+    private static array $instances = [];
+
     private PDO $pdo;
+    private string $name;
 
     private function __construct(array $cfg)
     {
+        $this->name = (string) ($cfg['name'] ?? 'default');
+
         $dsn = sprintf(
             'mysql:host=%s;port=%d;dbname=%s;charset=%s',
             $cfg['host'],
@@ -38,13 +48,33 @@ final class Database
         }
     }
 
-    public static function instance(?array $cfg = null): Database
+    /**
+     * Get a shared connection.
+     *
+     * @param array|null $cfg    Full config array. Loaded from disk when null.
+     * @param string     $key    Which config section to use: "db", "db_users", …
+     */
+    public static function instance(?array $cfg = null, string $key = 'db'): Database
     {
-        if (self::$instance === null) {
-            $cfg ??= require dirname(__DIR__) . '/shared/config.php';
-            self::$instance = new self($cfg['db']);
+        $cfg ??= require dirname(__DIR__) . '/shared/config.php';
+
+        if (!isset($cfg[$key]) || !is_array($cfg[$key])) {
+            throw new RuntimeException("Configuration section '{$key}' is missing from shared/config.php.");
         }
-        return self::$instance;
+
+        $name = (string) ($cfg[$key]['name'] ?? $key);
+
+        if (!isset(self::$instances[$name])) {
+            self::$instances[$name] = new self($cfg[$key]);
+        }
+
+        return self::$instances[$name];
+    }
+
+    /** Database name this connection points at. */
+    public function name(): string
+    {
+        return $this->name;
     }
 
     /** @return PDO */

@@ -1,0 +1,72 @@
+/* ---------------------------------------------------------------------
+   Task 3 — additions on top of the shared base stylesheet.
+
+   Covers the pieces the user manager needs that the portfolio did not:
+   a narrower content column, the avatar slot, the profile header and the
+   inline delete form.
+   --------------------------------------------------------------------- */
+
+.wrap.narrow { max-width: 640px; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 2rem 0 1rem;
+}
+.section-head h1, .section-head h2 { margin: 0; }
+
+.card { margin-bottom: 1.25rem; }
+.card.stat { text-align: center; }
+
+.nowrap { white-space: nowrap; }
+
+.inline-form { display: inline; }
+
+.row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+.row > * { flex: 0 1 auto; }
+
+.field.full { grid-column: 1 / -1; }
+
+.input-group { display: flex; gap: 0; }
+.input-group input { flex: 1 1 auto; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.input-group .btn {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border: 1px solid var(--surface-2);
+  border-left: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: 0 .9rem;
+  background: var(--surface-2);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+.profile-head h2 { margin: 0 0 .15rem; }
+
+.avatar-sm {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-2);
+  flex: 0 0 auto;
+}
+
+table td .btn, table th .btn { margin-right: .25rem; }
+
+@media (max-width: 560px) {
+  .profile-head { flex-direction: column; text-align: center; }
+  .section-head { flex-direction: column; align-items: flex-start; }
+}
